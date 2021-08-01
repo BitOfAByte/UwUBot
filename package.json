@@ -1,7 +1,7 @@
 {
   "name": "UwUBot",
   "version": "1.0.0",
-  "main": "src/index.js",
+  "main": "dist/index.js",
   "repository": "https://github.com/DaatUserName/UwUBot.git",
   "author": "UwUNewt",
   "license": "MIT",
@@ -15,6 +15,7 @@
     "minecraft-server-util": "^3.5.2",
     "moment": "^2.29.1",
     "mongoose": "^5.13.5",
+    "node-fetch": "^2.6.1",
     "path": "^0.12.7",
     "ts-node": "^10.1.0"
   }

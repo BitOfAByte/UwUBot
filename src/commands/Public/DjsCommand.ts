@@ -1,6 +1,6 @@
-import { Command } from "discord-akairo";
-import { Message, MessageEmbed, GuildMember } from "discord.js";
-import { fetch } from 'node-fetch';
+import {Command} from "discord-akairo";
+import {Message, MessageEmbed, GuildMember} from "discord.js";
+import axios from "axios";
 
 
 export default class DjsCommand extends Command {
@@ -24,36 +24,41 @@ export default class DjsCommand extends Command {
             ]
         });
     }
-    public async exec(message: Message, { query }: { query: string }): Promise<Message> {
-        const url = `https://djsdocs.sorta.moe/v2/embed?src=stable&q=${encodeURIComponent(query)}`
 
-        const docFetch = await fetch(url);
-        const embed = docFetch.json();
-
-        if(!embed || embed.error ) {
-            return await message.reply(`Invaild content ${query}`)
-        }
-
-        if(!message.guild) {
-            await message.reply({ embed })
-        }
-
-        const msg = await message.channel.send(embed)
-        await msg.react('❌');
-
-        let react;
-
+    public async exec(message: Message, {query}: { query: string }): Promise<any> {
         try {
-            react = await msg.awaitReactions(
-                (reaction, user) => reaction.emoji.name === '❌' && user.id === message.author.id,
-                { max: 1, time: 10000, errors: ['time']}
-            )
+            const uri = `https://djsdocs.sorta.moe/v2/embed?src=stable&q=${encodeURIComponent(
+                query
+            )}`
+
+            axios.get(uri).then(async (embed) => {
+                const { data } = embed;
+
+                if(data && !data.error) {
+                    await message.channel.send({ embed: data })
+                        .then(async res => {
+                            await res.react('🗑️');
+
+                            let react;
+
+                            try {
+                                react = await res.awaitReactions(
+                                    (reaction, user) => reaction.emoji.name === '🗑️' && user.id === message.author.id,
+                                    { max: 1, time: 10000, errors: ['time']}
+                                )
+                            } catch (e) {
+                                await res.reactions.removeAll();
+                                await message.reply(`**ERROR** ${e}`)
+                            }
+
+                            if(react && react.first()) await res.delete();
+
+                            await message.delete({ timeout: 2000 })
+                        })
+                }
+            })
         } catch (e) {
-            await msg.reactions.removeAll();
-            await msg.reply(`**ERROR** ${e}`)
+            await message.reply(e.message);
         }
-
-        if(react && react.first()) await message.delete();
-
     }
 }
